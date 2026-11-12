@@ -1,4 +1,4 @@
-import { Quiz, ExamToken, LiveStudent, ViolationRecord, GoogleFormItem, TransactionItem } from '../types';
+import { Quiz, ExamToken, LiveStudent, ViolationRecord, GoogleFormItem } from '../types';
 
 export const INITIAL_QUIZZES: Quiz[] = [
   {
@@ -189,6 +189,19 @@ export const INITIAL_QUIZZES: Quiz[] = [
 
 export const INITIAL_TOKENS: ExamToken[] = [
   {
+    token: 'LCXEIYU',
+    label: 'Segitiga',
+    quizId: 'quiz-1',
+    quizTitle: 'Segitiga',
+    quizSubject: 'Segitiga',
+    limit: 1,
+    status: 'Aktif',
+    expiresAt: null,
+    waitingRoom: false,
+    waitingRoomStarted: false,
+    createdAt: 'Baru saja',
+  },
+  {
     token: 'ZJT0P4M',
     label: 'Ulangan',
     quizId: 'quiz-1',
@@ -231,16 +244,6 @@ export const INITIAL_STUDENTS: LiveStudent[] = [
 ];
 
 export const INITIAL_GOOGLE_FORMS: GoogleFormItem[] = [];
-
-export const INITIAL_TRANSACTIONS: TransactionItem[] = [
-  {
-    id: 'trx-1',
-    packageName: 'Paket Basic',
-    date: '07 Sep 2026, 00:16',
-    amount: 'Rp 103.880',
-    status: 'DISETUJUI',
-  },
-];
 
 export const GAS_SCRIPT_CODE = `/**
  * soalpintar.ai — Google Form Creator Bridge

@@ -11,14 +11,12 @@ import {
   LiveStudent,
   ViolationRecord,
   GoogleFormItem,
-  TransactionItem,
 } from './types';
 import {
   INITIAL_QUIZZES,
   INITIAL_TOKENS,
   INITIAL_STUDENTS,
   INITIAL_GOOGLE_FORMS,
-  INITIAL_TRANSACTIONS,
 } from './data/initialData';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
@@ -31,7 +29,6 @@ import { UjianLiveView } from './views/UjianLiveView';
 import { NilaiSiswaView } from './views/NilaiSiswaView';
 import { RiwayatPelanggaranView } from './views/RiwayatPelanggaranView';
 import { DownloadAplikasiView } from './views/DownloadAplikasiView';
-import { StatusPaketView } from './views/StatusPaketView';
 import { SettingsView } from './views/SettingsView';
 import { LoginView } from './views/LoginView';
 import { SecureExamPlayer } from './views/SecureExamPlayer';
@@ -63,7 +60,18 @@ export default function App() {
 
   const [tokens, setTokens] = useState<ExamToken[]>(() => {
     const saved = localStorage.getItem('sp_tokens');
-    return saved ? JSON.parse(saved) : INITIAL_TOKENS;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          if (!parsed.some((t: ExamToken) => t.token === 'LCXEIYU')) {
+            return [INITIAL_TOKENS[0], ...parsed];
+          }
+          return parsed;
+        }
+      } catch (_) {}
+    }
+    return INITIAL_TOKENS;
   });
 
   const [students, setStudents] = useState<LiveStudent[]>(() => {
@@ -81,11 +89,6 @@ export default function App() {
     return saved ? JSON.parse(saved) : INITIAL_GOOGLE_FORMS;
   });
 
-  const [transactions, setTransactions] = useState<TransactionItem[]>(() => {
-    const saved = localStorage.getItem('sp_transactions');
-    return saved ? JSON.parse(saved) : INITIAL_TRANSACTIONS;
-  });
-
   const [gasUrl, setGasUrl] = useState<string>(() => {
     const saved = localStorage.getItem('sp_gas_url');
     if (
@@ -97,7 +100,8 @@ export default function App() {
     return '';
   });
 
-  // Modal states
+  // Modal and navigation states
+  const [selectedLiveTokenCode, setSelectedLiveTokenCode] = useState<string | null>(null);
   const [isLayarQrOpen, setIsLayarQrOpen] = useState(false);
   const [selectedTokenForQr, setSelectedTokenForQr] = useState<ExamToken>(tokens[0]);
   const [isLihatSoalOpen, setIsLihatSoalOpen] = useState(false);
@@ -444,8 +448,10 @@ export default function App() {
         };
       case 'ujian-live':
         return {
-          title: `Ujian Live · ${tokens[0]?.token || 'ZJT0P4M'}`,
-          subtitle: `${tokens[0]?.label || 'Ulangan'} · ${tokens[0]?.quizSubject || 'IPA'}`,
+          title: selectedLiveTokenCode ? `Ujian Live · ${selectedLiveTokenCode}` : 'Ujian Live',
+          subtitle: selectedLiveTokenCode
+            ? 'Pantau aktivitas siswa dan status ujian secara real-time'
+            : 'Siswa sedang ujian di akun Anda',
         };
       case 'nilai-siswa':
         return {
@@ -461,13 +467,6 @@ export default function App() {
         return {
           title: 'Download Aplikasi',
           subtitle: 'Aplikasi Android mode lockdown untuk ujian',
-        };
-      case 'status-paket':
-      case 'yang-baru':
-      case 'perpanjang-paket':
-        return {
-          title: 'Status Paket & Riwayat',
-          subtitle: 'Lihat status langganan dan riwayat transaksi Anda.',
         };
       case 'panduan':
         return {
@@ -491,7 +490,12 @@ export default function App() {
       {/* Sidebar */}
       <Sidebar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={(tab) => {
+          if (tab === 'ujian-live') {
+            setSelectedLiveTokenCode(null);
+          }
+          setActiveTab(tab);
+        }}
         onOpenStudentMode={() => setAppMode('student')}
         onOpenLogoutModal={() => setIsLogoutModalOpen(true)}
         userName={teacherUser.name}
@@ -622,6 +626,7 @@ export default function App() {
               onOpenLayarQr={handleOpenLayarQr}
               onOpenPanduan={() => setIsPanduanOpen(true)}
               onOpenUjianLive={(tok) => {
+                setSelectedLiveTokenCode(tok || null);
                 setActiveTab('ujian-live');
               }}
               onOpenStudentWebVersion={(tokenCode) => {
@@ -639,13 +644,14 @@ export default function App() {
           {activeTab === 'ujian-live' && (
             <UjianLiveView
               tokens={tokens}
-              selectedTokenCode={tokens[0]?.token}
+              selectedTokenCode={selectedLiveTokenCode}
               students={students}
               onOpenLayarQr={handleOpenLayarQr}
               onNavigateToViolations={() => setActiveTab('riwayat-pelanggaran')}
               onResetStudentStatus={handleResetStudentStatus}
-              onSelectToken={(code) => {}}
-              onBackToTokens={() => setActiveTab('token-siswa')}
+              onSelectToken={(code) => setSelectedLiveTokenCode(code)}
+              onBackToTokens={() => setSelectedLiveTokenCode(null)}
+              onNavigateToTokenSiswa={() => setActiveTab('token-siswa')}
             />
           )}
 
@@ -658,17 +664,6 @@ export default function App() {
           )}
 
           {activeTab === 'download-aplikasi' && <DownloadAplikasiView />}
-
-          {(activeTab === 'status-paket' ||
-            activeTab === 'yang-baru' ||
-            activeTab === 'perpanjang-paket') && (
-            <StatusPaketView
-              transactions={transactions}
-              onOpenUpgradeModal={() => {
-                alert('Paket Anda aktif s/d 07 Sep 2027. Opsi perpanjangan sekolah siap diproses.');
-              }}
-            />
-          )}
 
           {activeTab === 'panduan' && (
             <div className="p-8 max-w-4xl mx-auto">

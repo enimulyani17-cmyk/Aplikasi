@@ -2,25 +2,25 @@ import React, { useState } from 'react';
 import {
   ArrowLeft,
   QrCode,
+  Radio,
   ShieldAlert,
   Search,
   RotateCcw,
-  UserX,
-  CheckCircle,
-  Clock,
-  Sparkles,
+  KeyRound,
+  ExternalLink,
 } from 'lucide-react';
 import { ExamToken, LiveStudent } from '../types';
 
 interface UjianLiveViewProps {
   tokens: ExamToken[];
-  selectedTokenCode?: string;
+  selectedTokenCode?: string | null;
   students: LiveStudent[];
   onOpenLayarQr: (token: ExamToken) => void;
   onNavigateToViolations: () => void;
   onResetStudentStatus: (studentId: string) => void;
-  onSelectToken: (tokenCode: string) => void;
+  onSelectToken: (tokenCode: string | null) => void;
   onBackToTokens: () => void;
+  onNavigateToTokenSiswa?: () => void;
 }
 
 export const UjianLiveView: React.FC<UjianLiveViewProps> = ({
@@ -32,24 +32,132 @@ export const UjianLiveView: React.FC<UjianLiveViewProps> = ({
   onResetStudentStatus,
   onSelectToken,
   onBackToTokens,
+  onNavigateToTokenSiswa,
 }) => {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [internalSelectedToken, setInternalSelectedToken] = useState<string | null>(
+    selectedTokenCode ?? null
+  );
 
-  const activeToken =
-    tokens.find((t) => t.token === selectedTokenCode) || tokens[0] || {
-      token: 'ZJT0P4M',
-      label: 'Ulangan',
-      quizTitle: 'Kerucut',
-      quizSubject: 'IPA',
-      limit: 1,
-      status: 'Aktif',
-      expiresAt: null,
-      waitingRoom: false,
-      waitingRoomStarted: false,
-      createdAt: 'Baru saja',
-    };
+  // Sync if prop changes externally
+  React.useEffect(() => {
+    setInternalSelectedToken(selectedTokenCode ?? null);
+  }, [selectedTokenCode]);
 
+  const activeTokenCode = internalSelectedToken;
+  const activeToken = tokens.find((t) => t.token === activeTokenCode);
+
+  // Total students actively taking exam across all tokens
+  const totalActiveStudents = students.filter((s) => s.status === 'Mengerjakan').length;
+
+  const currentTime = new Date().toLocaleTimeString('id-ID', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+
+  // =========================================================================
+  // VIEW 1: TOKEN SELECTION GRID (MATCHING USER SCREENSHOT EXACTLY)
+  // =========================================================================
+  if (!activeToken) {
+    return (
+      <div className="p-6 sm:p-8 max-w-6xl mx-auto space-y-6">
+        {/* Top Banner: Siswa sedang ujian di akun Anda: 0 / 999 */}
+        <div className="bg-[#0e1628] border border-slate-800/80 rounded-2xl p-5 flex items-center gap-3.5 shadow-sm">
+          <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+            <Radio className="w-5 h-5 animate-pulse" />
+          </div>
+          <p className="text-sm text-slate-300">
+            Siswa sedang ujian di akun Anda:{' '}
+            <strong className="text-white font-bold">{totalActiveStudents} / 999</strong>
+          </p>
+        </div>
+
+        {/* Tokens Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {tokens.map((token) => {
+            const tokenStudentsActive = students.filter(
+              (s) => s.token === token.token && s.status === 'Mengerjakan'
+            ).length;
+
+            return (
+              <div
+                key={token.token}
+                className="bg-[#0e1628] border border-slate-800/80 hover:border-slate-700/80 rounded-2xl p-6 flex flex-col justify-between shadow-sm transition"
+              >
+                <div>
+                  {/* Badge Token Code */}
+                  <span className="inline-block px-3 py-1 rounded-lg bg-[#182038] text-indigo-300 font-mono font-bold text-xs tracking-wider border border-indigo-500/25 mb-4">
+                    {token.token}
+                  </span>
+
+                  {/* Title & Subject */}
+                  <h3 className="text-lg font-bold text-white tracking-tight leading-snug">
+                    {token.label}
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5 mb-5 font-medium">
+                    {token.quizSubject || token.quizTitle}
+                  </p>
+
+                  {/* Status Text: 0 mengerjakan · tanpa batas waktu */}
+                  <p className="text-xs text-slate-400 mb-6">
+                    <strong className="text-white font-bold">{tokenStudentsActive}</strong> mengerjakan
+                    {' · '}
+                    {token.expiresAt ? `kedaluwarsa ${token.expiresAt}` : 'tanpa batas waktu'}
+                  </p>
+                </div>
+
+                {/* Action Buttons: Layar QR & Pantau */}
+                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800/50">
+                  <button
+                    onClick={() => onOpenLayarQr(token)}
+                    className="py-2.5 px-3 rounded-xl bg-[#182038] hover:bg-[#202b48] border border-indigo-900/40 text-slate-200 text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer shadow-sm"
+                  >
+                    <QrCode className="w-4 h-4 text-slate-300" />
+                    <span>Layar QR</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setInternalSelectedToken(token.token);
+                      onSelectToken(token.token);
+                    }}
+                    className="py-2.5 px-3 rounded-xl bg-[#0f2a28] hover:bg-[#143936] border border-emerald-800/40 text-emerald-400 text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer shadow-sm"
+                  >
+                    <Radio className="w-4 h-4 text-emerald-400" />
+                    <span>Pantau</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {tokens.length === 0 && (
+          <div className="p-12 text-center bg-[#0e1628] border border-slate-800 rounded-2xl space-y-3">
+            <KeyRound className="w-10 h-10 text-slate-600 mx-auto stroke-[1.5]" />
+            <p className="text-sm font-bold text-slate-300">Belum ada token ujian yang dibuat</p>
+            <p className="text-xs text-slate-500">
+              Buat token ujian baru di menu Token Siswa untuk memulai sesi ujian live.
+            </p>
+            {onNavigateToTokenSiswa && (
+              <button
+                onClick={onNavigateToTokenSiswa}
+                className="mt-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition cursor-pointer inline-flex items-center gap-2"
+              >
+                <span>Buka Menu Token Siswa</span>
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // VIEW 2: LIVE MONITORING DETAIL FOR SELECTED TOKEN
+  // =========================================================================
   const filteredStudents = students
     .filter((s) => s.token === activeToken.token)
     .filter((s) => {
@@ -74,17 +182,23 @@ export const UjianLiveView: React.FC<UjianLiveViewProps> = ({
     (s) => s.token === activeToken.token && s.status === 'Selesai'
   ).length;
 
-  const currentTime = new Date().toLocaleTimeString('id-ID', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-
   return (
-    <div className="p-8 max-w-6xl mx-auto space-y-6">
-      {/* Title & Top Bar matching Screenshot 2 & 18 */}
+    <div className="p-6 sm:p-8 max-w-6xl mx-auto space-y-6">
+      {/* Title & Top Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
+          <button
+            onClick={() => {
+              setInternalSelectedToken(null);
+              onSelectToken(null);
+              onBackToTokens();
+            }}
+            className="inline-flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 transition cursor-pointer mb-2 font-medium"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Semua token</span>
+          </button>
+
           <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
             <span>Ujian Live · {activeToken.token}</span>
           </h2>
@@ -94,14 +208,6 @@ export const UjianLiveView: React.FC<UjianLiveViewProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            onClick={onBackToTokens}
-            className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition cursor-pointer"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Semua token</span>
-          </button>
-
           <span className="text-xs text-slate-400 flex items-center gap-1.5 font-mono">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span>Diperbarui {currentTime}</span>
@@ -109,7 +215,7 @@ export const UjianLiveView: React.FC<UjianLiveViewProps> = ({
 
           <button
             onClick={() => onOpenLayarQr(activeToken)}
-            className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-200 flex items-center gap-1.5 transition cursor-pointer"
+            className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-200 flex items-center gap-1.5 transition cursor-pointer"
           >
             <QrCode className="w-3.5 h-3.5 text-indigo-400" />
             <span>Layar QR</span>
@@ -117,7 +223,7 @@ export const UjianLiveView: React.FC<UjianLiveViewProps> = ({
 
           <button
             onClick={onNavigateToViolations}
-            className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-rose-400 flex items-center gap-1.5 transition cursor-pointer"
+            className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-rose-400 flex items-center gap-1.5 transition cursor-pointer"
           >
             <ShieldAlert className="w-3.5 h-3.5" />
             <span>Pelanggaran</span>
@@ -128,7 +234,7 @@ export const UjianLiveView: React.FC<UjianLiveViewProps> = ({
       {/* 4 Stat Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {/* Mengerjakan */}
-        <div className="bg-[#10172a] border border-slate-800 rounded-2xl p-5">
+        <div className="bg-[#0e1628] border border-slate-800 rounded-2xl p-5">
           <p className="text-xs font-medium text-slate-400">Mengerjakan</p>
           <div className="text-3xl font-extrabold text-emerald-400 mt-1 tracking-tight">
             {countMengerjakan}
@@ -136,7 +242,7 @@ export const UjianLiveView: React.FC<UjianLiveViewProps> = ({
         </div>
 
         {/* Diblokir */}
-        <div className="bg-[#10172a] border border-slate-800 rounded-2xl p-5">
+        <div className="bg-[#0e1628] border border-slate-800 rounded-2xl p-5">
           <p className="text-xs font-medium text-slate-400">Diblokir</p>
           <div className="text-3xl font-extrabold text-rose-500 mt-1 tracking-tight">
             {countDiblokir}
@@ -144,7 +250,7 @@ export const UjianLiveView: React.FC<UjianLiveViewProps> = ({
         </div>
 
         {/* Terputus */}
-        <div className="bg-[#10172a] border border-slate-800 rounded-2xl p-5">
+        <div className="bg-[#0e1628] border border-slate-800 rounded-2xl p-5">
           <p className="text-xs font-medium text-slate-400">Terputus</p>
           <div className="text-3xl font-extrabold text-amber-400 mt-1 tracking-tight">
             {countTerputus}
@@ -152,7 +258,7 @@ export const UjianLiveView: React.FC<UjianLiveViewProps> = ({
         </div>
 
         {/* Selesai */}
-        <div className="bg-[#10172a] border border-slate-800 rounded-2xl p-5">
+        <div className="bg-[#0e1628] border border-slate-800 rounded-2xl p-5">
           <p className="text-xs font-medium text-slate-400">Selesai</p>
           <div className="text-3xl font-extrabold text-sky-400 mt-1 tracking-tight">
             {countSelesai}
@@ -161,7 +267,7 @@ export const UjianLiveView: React.FC<UjianLiveViewProps> = ({
       </div>
 
       {/* Student List Container */}
-      <div className="bg-[#10172a] border border-slate-800 rounded-2xl p-6 space-y-4">
+      <div className="bg-[#0e1628] border border-slate-800 rounded-2xl p-6 space-y-4">
         {/* Filter bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="relative flex-1 max-w-md">

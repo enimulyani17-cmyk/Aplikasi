@@ -77,14 +77,6 @@ export interface GoogleFormItem {
   synced: boolean;
 }
 
-export interface TransactionItem {
-  id: string;
-  packageName: string;
-  date: string;
-  amount: string;
-  status: 'DISETUJUI' | 'PENDING';
-}
-
 export type ActiveTab =
   | 'dashboard'
   | 'ai-generator'
@@ -95,8 +87,5 @@ export type ActiveTab =
   | 'nilai-siswa'
   | 'riwayat-pelanggaran'
   | 'download-aplikasi'
-  | 'status-paket'
-  | 'yang-baru'
-  | 'perpanjang-paket'
   | 'panduan'
   | 'settings';

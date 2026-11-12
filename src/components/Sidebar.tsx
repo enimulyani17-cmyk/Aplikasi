@@ -9,8 +9,6 @@ import {
   ClipboardCheck,
   ShieldAlert,
   Smartphone,
-  Receipt,
-  CalendarCheck,
   BookOpen,
   Settings,
   Moon,
@@ -148,21 +146,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {navItem('nilai-siswa', 'Nilai Siswa', ClipboardCheck)}
             {navItem('riwayat-pelanggaran', 'Riwayat Pelanggaran', ShieldAlert)}
             {navItem('download-aplikasi', 'Download Aplikasi', Smartphone)}
-          </div>
-        </div>
-
-        {/* Section: LANGGANAN */}
-        <div>
-          <p className="px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
-            LANGGANAN
-          </p>
-          <div className="space-y-1">
-            {navItem('status-paket', 'Status Paket', Receipt)}
-            {navItem('yang-baru', 'Yang Baru', Sparkles, {
-              text: 'BARU',
-              color: 'bg-amber-500/20 text-amber-400 border border-amber-500/30',
-            })}
-            {navItem('perpanjang-paket', 'Perpanjang Paket', CalendarCheck)}
           </div>
         </div>
 

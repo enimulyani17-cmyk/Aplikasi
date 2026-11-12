@@ -165,30 +165,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white transition" />
             </button>
 
-            {/* Current Package Card */}
-            <div
-              onClick={() => setActiveTab('status-paket')}
-              className="bg-[#11192e] border border-emerald-500/30 rounded-2xl p-4 cursor-pointer hover:border-emerald-500/50 transition group"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                    <CheckCircle2 className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="text-[11px] text-slate-400">Paket Anda</span>
-                    <h5 className="text-sm font-bold text-emerald-400">Paket Basic</h5>
-                  </div>
+            {/* System Status Card */}
+            <div className="bg-[#11192e] border border-emerald-500/30 rounded-2xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                  <CheckCircle2 className="w-4 h-4" />
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white transition" />
+                <div>
+                  <span className="text-[11px] text-slate-400">Status Akses Guru</span>
+                  <h5 className="text-sm font-bold text-emerald-400">Akses Penuh Aktif</h5>
+                </div>
               </div>
               <p className="text-xs text-emerald-300 font-medium">Siswa ujian bersamaan tanpa batas</p>
-              <p className="text-[11px] text-slate-500 mt-1">Aktif s/d 07 Sep 2027</p>
-
-              <div className="mt-3 pt-3 border-t border-slate-800 flex items-center gap-2 text-xs text-amber-400 font-medium">
-                <Zap className="w-3.5 h-3.5" />
-                <span>Upgrade Paket Sekolah Pro: siswa tanpa batas + 10 akun guru</span>
-              </div>
+              <p className="text-[11px] text-slate-500 mt-1">Siap digunakan untuk seluruh ujian sekolah</p>
             </div>
           </div>
         </div>
